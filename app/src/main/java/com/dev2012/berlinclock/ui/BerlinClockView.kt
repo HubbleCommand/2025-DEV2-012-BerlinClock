@@ -1,5 +1,6 @@
 package com.dev2012.berlinclock.ui
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -29,13 +30,13 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontVariation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.dev2012.berlinclock.R
 import com.dev2012.berlinclock.ui.theme.BerlinClockTheme
-import org.koin.androidx.compose.koinViewModel
 import kotlin.time.ExperimentalTime
-import java.time.Instant
 
 
+@SuppressLint("ViewModelConstructorInComposable")
 @OptIn(ExperimentalTime::class)
 @Preview(
     showBackground = true
@@ -43,10 +44,9 @@ import java.time.Instant
 @Composable
 fun BerlinClockPreview() {
     BerlinClockTheme {
-        BerlinClockView(vm = FakeBerlinClockViewModel(Instant.now()))
+        BerlinClockView(vm = BerlinClockViewModel())
     }
 }
-
 
 //While I could put these shapes in the class & remember them
 // I think this makes it cleaner
@@ -92,11 +92,91 @@ fun RowScope.BerlinClockElement(
 }
 
 @Composable
-fun BerlinClockView(
-    vm: BerlinClockUiProvider = koinViewModel<BerlinClockViewModel>()
+private fun HourRow(
+    modifier: Modifier = Modifier,
+    elementModifier: Modifier = Modifier,
+    count: () -> Int
 ) {
-    val state by vm.uiState.collectAsState()
+    Row(
+        modifier = modifier,
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterHorizontally)
+    ) {
+        val currentCount = count()
+        repeat(4) { index ->
+            BerlinClockElement(
+                modifier = elementModifier,
+                shape = if (index == 0) leftShape else if (index == 3) rightShape else centerShape,
+                color = if (currentCount >= index + 1) MaterialTheme.colorScheme.primary else Color.Transparent,
+            )
+        }
+    }
+}
 
+@Composable
+private fun MinuteAccumulatorRow(
+    modifier: Modifier = Modifier,
+    elementModifier: Modifier = Modifier,
+    count: () -> Int
+) {
+    Row(
+        modifier = modifier,
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterHorizontally)
+    ) {
+        val currentCount = count()
+        repeat(11) { index ->
+            val color = if (currentCount >= index + 1) {
+                if ((index + 1) % 3 == 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary
+            } else {
+                Color.Transparent
+            }
+            BerlinClockElement(
+                modifier = elementModifier,
+                shape = when (index) {
+                    0 -> leftShape
+                    10 -> rightShape
+                    else -> centerShape
+                },
+                color = color,
+            )
+        }
+    }
+}
+
+@Composable
+private fun MinuteRemainderRow(
+    modifier: Modifier = Modifier,
+    elementModifier: Modifier = Modifier,
+    count: () -> Int
+) {
+    Row(
+        modifier = modifier,
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterHorizontally)
+    ) {
+        val currentCount = count()
+        repeat(4) { index ->
+            BerlinClockElement(
+                modifier = elementModifier,
+                shape = if (index == 0) leftShape else if (index == 3) rightShape else centerShape,
+                color = if (currentCount >= index + 1) MaterialTheme.colorScheme.secondary else Color.Transparent,
+            )
+        }
+    }
+}
+
+@Composable
+fun BerlinClockView(
+    vm: BerlinClockViewModel = viewModel<BerlinClockViewModel>()
+) {
+    val seconds by vm.secondsFlow.collectAsState()
+    val minutesRemainder by vm.minuteRemainderFlow.collectAsState()
+    val minutesAccumulator by vm.minuteAccumulatorFlow.collectAsState()
+    val hoursRemainder by vm.hoursRemainderFlow.collectAsState()
+    val hoursAccumulator by vm.hoursAccumulatorFlow.collectAsState()
+
+    val timeString by vm.stringFlow.collectAsState()
     val secondSize = 100.dp
     val elementModifier = Modifier.height(50.dp)
 
@@ -112,77 +192,37 @@ fun BerlinClockView(
             modifier = Modifier
                 .size(secondSize)
                 .background(
-                    color = if (state.seconds.isOn()) MaterialTheme.colorScheme.secondary else Color.Transparent,
+                    color = if (seconds.isOn()) MaterialTheme.colorScheme.secondary else Color.Transparent,
                     shape = circleShape
                 )
-                .border(width = 2.dp, color = MaterialTheme.colorScheme.outline, shape = circleShape),
+                .border(
+                    width = 2.dp,
+                    color = MaterialTheme.colorScheme.outline,
+                    shape = circleShape
+                ),
             contentAlignment = Alignment.Center
         ) {}
-        Row(
+
+        HourRow(
             modifier = hourRowModifier,
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterHorizontally)
-        ) {
-            repeat(4) { index ->
-                BerlinClockElement(
-                    modifier = elementModifier,
-                    shape = if (index == 0) leftShape else if (index == 3) rightShape else centerShape,
-                    color = if (state.hoursAccumulator >= index + 1) MaterialTheme.colorScheme.primary else Color.Transparent,
-                )
-            }
-        }
-        Row(
+            elementModifier = elementModifier,
+            count = { hoursAccumulator }
+        )
+        HourRow(
             modifier = hourRowModifier,
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterHorizontally)
-        ) {
-            repeat(4) { index ->
-                BerlinClockElement(
-                    modifier = elementModifier,
-                    shape = if (index == 0) leftShape else if (index == 3) rightShape else centerShape,
-                    color = if (state.hoursRemainder >= index + 1) MaterialTheme.colorScheme.primary else Color.Transparent,
-                )
-            }
-        }
-        Row(
+            elementModifier = elementModifier,
+            count = { hoursRemainder }
+        )
+        MinuteAccumulatorRow(
             modifier = minuteRowModifier,
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterHorizontally)
-        ) {
-            BerlinClockElement(
-                modifier = elementModifier,
-                shape = leftShape,
-                color = if (state.minutesAccumulator >= 1) MaterialTheme.colorScheme.secondary else Color.Transparent,
-            )
-            repeat(9) { index ->
-                val color = if (state.minutesAccumulator >= index + 2)
-                    if ((index + 2) % 3 == 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary
-                else Color.Transparent
-                BerlinClockElement(
-                    modifier = elementModifier,
-                    shape = centerShape,
-                    color = color,
-                )
-            }
-            BerlinClockElement(
-                modifier = elementModifier,
-                shape = rightShape,
-                color = if (state.minutesAccumulator >= 11) MaterialTheme.colorScheme.secondary else Color.Transparent,
-            )
-        }
-        Row(
+            elementModifier = elementModifier,
+            count = { minutesAccumulator }
+        )
+        MinuteRemainderRow(
             modifier = minuteRowModifier,
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterHorizontally)
-        ) {
-            repeat(4) { index ->
-                BerlinClockElement(
-                    modifier = elementModifier,
-                    shape = if (index == 0) leftShape else if (index == 3) rightShape else centerShape,
-                    color = if (state.minutesRemainder >= index + 1) MaterialTheme.colorScheme.secondary else Color.Transparent,
-                )
-            }
-        }
-        Text(text = state.timeString, fontFamily = SevenSegmentFamily)
+            elementModifier = elementModifier,
+            count = { minutesRemainder }
+        )
+        Text(text = timeString, fontFamily = SevenSegmentFamily)
     }
 }

@@ -4,38 +4,47 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 //Would use kotlin time, but would need to update kotlin lang version
 import java.time.Instant
 import java.time.ZoneId
-import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 
-/**
- * Using Instant as this is the modern way to do timing
- */
-class FakeBerlinClockViewModel(instant: Instant = Instant.parse("2020-01-01T12:34:56Z")) : BerlinClockUiProvider {
-    private val _uiState = MutableStateFlow(BerlinClockUiState.from(instant))
-    override val uiState: StateFlow<BerlinClockUiState> = _uiState.asStateFlow()
 
-    /**
-     * By default, time offset is Zero
-     */
-    fun setTime(instant: Instant, timeZone: ZoneOffset = ZoneOffset.UTC) {
-        _uiState.value = BerlinClockUiState.from(instant, timeZone)
-    }
-}
-
-interface BerlinClockUiProvider {
-    val uiState: StateFlow<BerlinClockUiState>
-}
-
-class BerlinClockViewModel : ViewModel(), BerlinClockUiProvider {
+class BerlinClockViewModel() : ViewModel() {
     private val _uiState = MutableStateFlow(BerlinClockUiState.from(Instant.now()))
-    override val uiState: StateFlow<BerlinClockUiState> = _uiState.asStateFlow()
+
+    //These flows allow for reduced recompositions for BerlinClockElements
+    val secondsFlow: StateFlow<On> = _uiState
+        .map { state -> state.seconds }
+        .distinctUntilChanged()
+        .stateIn(viewModelScope, SharingStarted.Lazily, On(false))
+    val minuteRemainderFlow: StateFlow<Int> = _uiState
+        .map { state -> state.minutesRemainder }
+        .distinctUntilChanged()
+        .stateIn(viewModelScope, SharingStarted.Lazily, -1)
+    val minuteAccumulatorFlow = _uiState
+        .map { state -> state.minutesAccumulator }
+        .distinctUntilChanged()
+        .stateIn(viewModelScope, SharingStarted.Lazily, -1)
+    val hoursRemainderFlow = _uiState
+        .map { state -> state.hoursRemainder }
+        .distinctUntilChanged()
+        .stateIn(viewModelScope, SharingStarted.Lazily, -1)
+    val hoursAccumulatorFlow = _uiState
+        .map { state -> state.hoursAccumulator }
+        .distinctUntilChanged()
+        .stateIn(viewModelScope, SharingStarted.Lazily, -1)
+    val stringFlow = _uiState
+        .map { state -> state.timeString }
+        .distinctUntilChanged()
+        .stateIn(viewModelScope, SharingStarted.Lazily, "")
 
     init {
         //I guess I could do https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.concurrent/timer.html
