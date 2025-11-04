@@ -5,6 +5,8 @@
 The Berlin Clock, also known as [Mengenlehreuhr](https://en.wikipedia.org/wiki/Mengenlehreuhr)
 is a public clock that uses a series of 24 lights to display hours, minutes, and even/odd seconds.
 
+Font from [dafont](https://www.dafont.com/seven-segment.font)
+
 ## Building & Running
 
 This project can easily be run with either Android Studio or IntelliJ IDEA.
