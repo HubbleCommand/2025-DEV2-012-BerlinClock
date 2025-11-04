@@ -10,7 +10,7 @@ android {
 
     defaultConfig {
         applicationId = "com.dev2012.berlinclock"
-        minSdk = 24
+        minSdk = 26
         targetSdk = 36
         versionCode = 1
         versionName = "1.0"
