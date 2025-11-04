@@ -49,11 +49,19 @@ class BerlinClockViewModel : ViewModel(), BerlinClockUiProvider {
     }
 }
 
+//Overkill for what it is, but I prefer value classes over boolean flags
+@JvmInline
+value class On(private val on: Boolean) {
+    fun isOn(): Boolean {
+        return on
+    }
+}
+
 data class BerlinClockUiState(
-    val seconds: Boolean,
-    val hours: Int,
+    val seconds: On,
+    val hoursRemainder: Int,
     val hoursAccumulator: Int,
-    val minutes: Int,
+    val minutesRemainder: Int,
     val minutesAccumulator: Int,
     val timeString: String
 ) {
@@ -72,7 +80,7 @@ data class BerlinClockUiState(
             val hoursAccumulator = zoned.hour / 5
 
             return BerlinClockUiState(
-                seconds, hours, hoursAccumulator, minutes, minutesAccumulator, formatted
+                On(seconds), hours, hoursAccumulator, minutes, minutesAccumulator, formatted
             )
         }
     }

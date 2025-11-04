@@ -36,11 +36,11 @@ class ViewModelUnitTest {
         val viewModel: FakeBerlinClockViewModel = getKoin().get()
 
         viewModel.setTime(Instant.parse("2025-01-01T12:00:00Z"))
-        assertTrue(viewModel.uiState.value.seconds)
+        assertTrue(viewModel.uiState.value.seconds.isOn())
         viewModel.setTime(Instant.parse("2025-01-01T12:00:02Z"))
-        assertTrue(viewModel.uiState.value.seconds)
+        assertTrue(viewModel.uiState.value.seconds.isOn())
         viewModel.setTime(Instant.parse("2025-01-01T12:00:01Z"))
-        assertFalse(viewModel.uiState.value.seconds)
+        assertFalse(viewModel.uiState.value.seconds.isOn())
     }
 
     @Test
@@ -48,13 +48,13 @@ class ViewModelUnitTest {
         val viewModel: FakeBerlinClockViewModel = getKoin().get()
 
         viewModel.setTime(Instant.parse("2025-01-01T12:00:00Z"))
-        assertEquals(0, viewModel.uiState.value.minutes)
+        assertEquals(0, viewModel.uiState.value.minutesRemainder)
         assertEquals(0, viewModel.uiState.value.minutesAccumulator)
         viewModel.setTime(Instant.parse("2025-01-01T12:04:00Z"))
-        assertEquals(4, viewModel.uiState.value.minutes)
+        assertEquals(4, viewModel.uiState.value.minutesRemainder)
         assertEquals(0, viewModel.uiState.value.minutesAccumulator)
         viewModel.setTime(Instant.parse("2025-01-01T12:34:00Z"))
-        assertEquals(4, viewModel.uiState.value.minutes)
+        assertEquals(4, viewModel.uiState.value.minutesRemainder)
         assertEquals(6, viewModel.uiState.value.minutesAccumulator)
     }
 
@@ -62,13 +62,13 @@ class ViewModelUnitTest {
     fun hours() {
         val viewModel: FakeBerlinClockViewModel = getKoin().get()
         viewModel.setTime(Instant.parse("2025-01-01T00:00:00Z"))
-        assertEquals(0, viewModel.uiState.value.hours)
+        assertEquals(0, viewModel.uiState.value.hoursRemainder)
         assertEquals(0, viewModel.uiState.value.hoursAccumulator)
         viewModel.setTime(Instant.parse("2025-01-01T08:00:00Z"))
-        assertEquals(3, viewModel.uiState.value.hours)
+        assertEquals(3, viewModel.uiState.value.hoursRemainder)
         assertEquals(1, viewModel.uiState.value.hoursAccumulator)
         viewModel.setTime(Instant.parse("2025-01-01T12:00:00Z"))
-        assertEquals(2, viewModel.uiState.value.hours)
+        assertEquals(2, viewModel.uiState.value.hoursRemainder)
         assertEquals(2, viewModel.uiState.value.hoursAccumulator)
     }
 }
