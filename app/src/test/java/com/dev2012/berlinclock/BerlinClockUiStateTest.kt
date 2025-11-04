@@ -3,11 +3,11 @@ package com.dev2012.berlinclock
 
 import com.dev2012.berlinclock.ui.BerlinClockUiState
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.time.Instant
 import java.time.ZoneOffset
-import kotlin.test.assertFalse
-import kotlin.test.assertTrue
 
 class BerlinClockUiStateTest {
 

@@ -54,12 +54,6 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
 
-    //Koin
-    implementation(project.dependencies.platform("io.insert-koin:koin-bom:4.1.0"))
-    implementation(libs.koin.core)
-    implementation(libs.koin.android)
-    implementation(libs.koin.androidx.compose)
-
     //Test deps
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
@@ -68,8 +62,5 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
-
-    //Koin testing
-    testImplementation(libs.koin.test)
-    testImplementation(libs.koin.test.junit4)
+    testImplementation(kotlin("test"))
 }

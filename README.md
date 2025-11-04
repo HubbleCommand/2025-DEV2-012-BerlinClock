@@ -21,7 +21,6 @@ What was used used:
 - Kotlin
 - Jetpack Compose
 - MVVM with ViewModel and StateFlows
-- DI with koin
 - CI with GitHub Actions
 
 Important files are in:
